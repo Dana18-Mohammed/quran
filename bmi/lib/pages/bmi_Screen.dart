@@ -1,7 +1,13 @@
 import 'dart:math';
 
+import 'package:bmi/pages/widgets/card_data.dart';
+import 'package:bmi/pages/widgets/card_widget.dart';
+import 'package:bmi/pages/widgets/raw_button.dart';
 import 'package:flutter/material.dart';
-import '../bmi_result.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../constants.dart';
+import '../result/bmi_result.dart';
+// import '../widgets/card_widget.dart';
 
 class BMIScreen extends StatefulWidget {
   const BMIScreen({Key? key}) : super(key: key);
@@ -11,151 +17,240 @@ class BMIScreen extends StatefulWidget {
 }
 
 class _BMIScreenState extends State<BMIScreen> {
-  bool isMale = false;
-  late double height = 120;
+  late int height = 120;
   int age = 20;
-  int weight = 40;
-
-  void selectGender(bool male) {
-    setState(() {
-      isMale = male;
-    });
-  }
-
-  void incrementAge() {
-    setState(() {
-      age++;
-    });
-  }
-
-  void decrementAge() {
-    setState(() {
-      if (age > 0) {
-        age--;
-      }
-    });
-  }
-
-  void incrementWeight() {
-    setState(() {
-      weight++;
-    });
-  }
-
-  void decrementWeight() {
-    setState(() {
-      if (weight > 0) {
-        weight--;
-      }
-    });
-  }
-
-  void calculateBMI(BuildContext context) {
-    double result = weight / pow(height / 100, 2);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BmiResult(isMale, age, result),
-      ),
-    );
-  }
+  double weight = 40;
+  Gender? selectedGender;
+  bool? isClicked = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black87,
+      backgroundColor: primaryColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.black,
+        backgroundColor: primaryColor,
         title: const Text(
+          textAlign: TextAlign.center,
           "BMI Calculator",
           style: TextStyle(fontSize: 24),
         ),
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: GestureDetector(
-                      onTap: () => selectGender(Gender.male),
-                      child: GenderSelectionWidget(
-                        isSelected: isMale,
-                        imagePath: 'assets/images/Male.png',
-                        genderText: 'MALE',
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: GestureDetector(
-                      onTap: () => selectGender(Gender.female),
-                      child: GenderSelectionWidget(
-                        isSelected: !isMale,
-                        imagePath: 'assets/images/Female-icon.png',
-                        genderText: 'FEMALE',
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: HeightSliderWidget(
-                height: height,
-                onChanged: (value) {
+              child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CardWidget(
+                color:
+                    selectedGender == Gender.male ? ActiveColor : inActiveColor,
+                onTap: () {
                   setState(() {
-                    height = value;
+                    selectedGender = Gender.male;
                   });
                 },
+                child: const CardData(
+                  title: 'Male',
+                  icon: FontAwesomeIcons.male,
+                ),
+              ),
+              CardWidget(
+                color: selectedGender == Gender.female
+                    ? ActiveColor
+                    : inActiveColor,
+                onTap: () {
+                  setState(() {
+                    selectedGender = Gender.female;
+                  });
+                },
+                child: const CardData(
+                  title: 'Female',
+                  icon: FontAwesomeIcons.venus,
+                ),
+              ),
+            ],
+          )),
+          CardWidget(
+              color: inActiveColor,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Height'.toUpperCase(),
+                    style: titleTextStyle,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+// mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '$height',
+                        style: NumTextStyle,
+                      ),
+                      Text(
+                        'cm',
+                        style: titleTextStyle,
+                      ),
+                    ],
+                  ),
+                  SliderTheme(
+                    data: SliderThemeData(
+                        trackHeight: 1,
+                        activeTrackColor: Colors.white,
+                        inactiveTrackColor: ActiveColor,
+                        thumbColor: const Color(0xFFfd3225),
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 15,
+                        ),
+                        overlayColor: btn),
+                    child: Slider(
+                        min: 10,
+                        max: 200,
+                        value: height.toDouble(),
+                        onChanged: (value) {
+                          setState(() {
+                            height = value.round();
+                          });
+                          print(height);
+                        }),
+                  )
+                ],
+              )),
+          Expanded(
+              child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CardWidget(
+                  color: inActiveColor,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Weight',
+                        style: titleTextStyle,
+                      ),
+                      Text(
+                        '${weight.round()}',
+                        style: NumTextStyle,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FloatingActionButton(
+                              backgroundColor: ActiveColor,
+                              child: Icon(
+                                FontAwesomeIcons.plus,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  ++weight;
+                                  print(weight);
+                                });
+                              }),
+                          const SizedBox(
+                            width: 24,
+                          ),
+                          FloatingActionButton(
+                              backgroundColor: ActiveColor,
+                              child: Icon(
+                                FontAwesomeIcons.minus,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  --weight;
+                                  print(weight);
+                                });
+                              })
+                        ],
+                      )
+                    ],
+                  )),
+              CardWidget(
+                  color: inActiveColor,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Age',
+                        style: titleTextStyle,
+                      ),
+                      Text(
+                        '$age',
+                        style: NumTextStyle,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FloatingActionButton(
+                              backgroundColor: ActiveColor,
+                              child: Icon(
+                                FontAwesomeIcons.plus,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  ++age;
+                                  print(age);
+                                });
+                              }),
+                          const SizedBox(
+                            width: 24,
+                          ),
+                          FloatingActionButton(
+                              backgroundColor: ActiveColor,
+                              child: Icon(
+                                FontAwesomeIcons.minus,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  --age;
+                                  print(age);
+                                });
+                              }),
+                        ],
+                      )
+                    ],
+                  )),
+            ],
+          )),
+          TextButton(
+            onPressed: () {
+              BMIResult bmiResult = BMIResult(weight.round(), height);
+              print(bmiResult.calculateBMI());
+              print(bmiResult.checkBMIResult());
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(bmiResult.checkBMIResult()),
+                duration: Duration(seconds: 1),
+                action: SnackBarAction(
+                  label: '',
+                  onPressed: () {},
+                ),
+              ));
+            },
+            child: Container(
+              padding: const EdgeInsets.only(bottom: 16),
+              alignment: Alignment.center,
+              color: btn,
+              height: 75,
+              width: double.infinity,
+              child: Text(
+                'CALCULATE',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: AgeWidget(
-                      age: age,
-                      incrementAge: incrementAge,
-                      decrementAge: decrementAge,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: WeightWidget(
-                      weight: weight,
-                      incrementWeight: incrementWeight,
-                      decrementWeight: decrementWeight,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            width: double.infinity,
-            child: CalculateButton(
-              onPressed: () => calculateBMI(context),
-            ),
-          ),
+          )
         ],
       ),
     );
   }
 }
+
+enum Gender { male, female }
