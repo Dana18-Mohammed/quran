@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bmi/pages/widgets/card_data.dart';
 import 'package:bmi/pages/widgets/card_widget.dart';
 import 'package:bmi/pages/widgets/raw_button.dart';
+import 'package:bmi/result/bmi_result_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../constants.dart';
@@ -52,7 +53,7 @@ class _BMIScreenState extends State<BMIScreen> {
                 },
                 child: const CardData(
                   title: 'Male',
-                  icon: FontAwesomeIcons.male,
+                  icon: FontAwesomeIcons.mars,
                 ),
               ),
               CardWidget(
@@ -234,6 +235,13 @@ class _BMIScreenState extends State<BMIScreen> {
                   onPressed: () {},
                 ),
               ));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => BmiResultScreen(
+                          weight: weight.round(),
+                          height: height,
+                          result: bmiResult.checkBMIResult())));
             },
             child: Container(
               padding: const EdgeInsets.only(bottom: 16),

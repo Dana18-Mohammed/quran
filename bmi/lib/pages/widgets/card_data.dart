@@ -15,8 +15,11 @@ class CardData extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Image.asset('assets/images/Male.png'),
-        SizedBox(height: 16),
+        Icon(
+          icon,
+          size: 50,
+        ),
+        const SizedBox(height: 16),
         Text(
           title.toUpperCase(),
           style: titleTextStyle,
