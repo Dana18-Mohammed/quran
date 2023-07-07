@@ -14,11 +14,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
-          textTheme: TextTheme().copyWith(
-            titleLarge: TextStyle(fontSize: 25),
-            bodySmall: TextStyle(fontSize: 25, color: Colors.red),
-            bodyMedium: TextStyle(fontSize: 30),
+          textTheme: const TextTheme().copyWith(
+            titleLarge: const TextStyle(fontSize: 25),
+            titleMedium: const TextStyle(fontSize: 20),
+            bodySmall: const TextStyle(fontSize: 25, color: Colors.red),
+            bodyMedium: const TextStyle(fontSize: 30),
           ),
+          scaffoldBackgroundColor: primaryColor,
           appBarTheme: AppBarTheme(backgroundColor: primaryColor)),
       initialRoute: '/',
       routes: {

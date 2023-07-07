@@ -239,9 +239,11 @@ class _BMIScreenState extends State<BMIScreen> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => BmiResultScreen(
-                          weight: weight.round(),
-                          height: height,
-                          result: bmiResult.checkBMIResult())));
+                            weight: weight.round(),
+                            height: height,
+                            result: bmiResult.checkBMIResult(),
+                            yourBmi: bmiResult.calculateBMI(),
+                          )));
             },
             child: Container(
               padding: const EdgeInsets.only(bottom: 16),
