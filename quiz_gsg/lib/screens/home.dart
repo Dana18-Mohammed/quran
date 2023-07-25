@@ -1,6 +1,10 @@
-import 'dart:ui';
-
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/foundation.dart';
+import 'package:quiz_gsg/screens/qoute_content_screen.dart';
+import 'package:share_plus/share_plus.dart';
+
 import '../Network_helper/network_helper.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,7 +17,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String imageUrl = '';
   String content = '';
+  String author = '';
   List<dynamic> tags = [];
+  GlobalKey globalKey = GlobalKey();
+  Uint8List? pngBytes;
 
   @override
   void initState() {
@@ -22,212 +29,84 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> fetchDataAndImage() async {
-    await fetchDataQuote();
-    await fetchImage();
-  }
-
-  Future<void> fetchDataQuote() async {
-    Map<String, dynamic> data = await NetworkHelper().getQuoteData();
-
+    final data = await NetworkHelper().fetchDataQuoteAndImage();
     setState(() {
       content = data['content'] ?? 'Failed to fetch content.';
+      author = data['author'] ?? 'Failed to fetch author name.';
       tags = data['tags'] ?? [];
+      imageUrl = data['imageUrl'] ?? '';
     });
-    print('quote');
   }
 
-  Future<void> fetchImage() async {
-    print('image');
-    String apiUrl = 'https://random.imagecdn'
-        '.app/v1/image?width=500&height=550&category=buildings&format=json';
-    if (tags.isNotEmpty) {
-      apiUrl = apiUrl.replaceAll('buildings', tags[0].toString());
-      String url = await NetworkHelper().getImage(apiUrl);
-      setState(() {
-        imageUrl = url ?? 'Failed to fetch image.';
-      });
+  Future<void> _capturePng() async {
+    RenderRepaintBoundary boundary =
+        globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    print('inside2..');
+
+    await Future.delayed(const Duration(milliseconds: 20));
+    ui.Image image = await boundary.toImage();
+    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    pngBytes = byteData!.buffer.asUint8List();
+    if (kDebugMode) {
+      print(pngBytes);
+    }
+    if (mounted) {
+      _onShareXFileFromAssets(context, byteData);
     }
   }
 
-  void refreshData() {
-    setState(() {
-      imageUrl = '';
-      content = '';
-      tags = [];
-    });
-    fetchDataAndImage();
+  void _onShareXFileFromAssets(BuildContext context, ByteData? data) async {
+    final box = context.findRenderObject() as RenderBox?;
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final buffer = data!.buffer;
+    final shareResult = await Share.shareXFiles(
+      [
+        XFile.fromData(
+          buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+          name: 'screen_shot.png',
+          mimeType: 'image/png',
+        ),
+      ],
+      sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+    );
+
+    scaffoldMessenger.showSnackBar(getResultSnackBar(shareResult));
+  }
+
+  SnackBar getResultSnackBar(ShareResult result) {
+    return SnackBar(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Share result: ${result.status}"),
+          if (result.status == ShareResultStatus.success)
+            Text("Shared to: ${result.raw}")
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(imageUrl),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                    Colors.white.withOpacity(0.8), BlendMode.dstATop),
-              ),
-            ),
-            constraints: const BoxConstraints.expand(),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [
-                    Colors.white.withOpacity(0.2),
-                    Colors.white.withOpacity(0.2)
-                  ], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-                ),
-              ),
-            ),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              const SizedBox(
-                height: 100,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      content,
-                      // style: kTempTextStyle,
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(content),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            // const Text(
-                            //   'now',
-                            //   style: TextStyle(
-                            //     fontSize: 30.0,
-                            //     fontFamily: 'Spartan MB',
-                            //     letterSpacing: 13,
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 35,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: tags.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Chip(
-                        label: Text(tags[index]),
-                        backgroundColor: Colors.white,
-                        labelStyle: const TextStyle(color: Colors.black),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      )
-      // SizedBox(
-      //   height: 35,
-      //   child: ListView.builder(
-      //     scrollDirection: Axis.horizontal,
-      //     itemCount: tags.length,
-      //     itemBuilder: (context, index) {
-      //       return Padding(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      //         child: Chip(
-      //           label: Text(tags[index]),
-      //           backgroundColor: Colors.white,
-      //           labelStyle: const TextStyle(color: Colors.black),
-      //         ),
-      //       );
-      //     },
-      //   ),
-      // ),
-      // Positioned(
-      //   // top: 200,
-      //   child: Expanded(
-      //     child: Padding(
-      //       padding: const EdgeInsets.all(16.0),
-      //       child: Text(
-      //         content,
-      //         style: const TextStyle(fontSize: 20),
-      //       ),
-      //     ),
-      //   ),
-      // ),
-
-      // Center(
-      //   child: imageUrl.isNotEmpty
-      //       ? Image.network(imageUrl)
-      //       : const Text('Image loading or not available'),
-      // ),
-
-      ,
-      floatingActionButton: FloatingActionButton(
-        onPressed: refreshData,
-        tooltip: 'Refresh',
-        child: const Icon(Icons.refresh),
+    return RepaintBoundary(
+      key: globalKey,
+      child: Scaffold(
+        body: QuoteContent(
+          imageUrl: imageUrl,
+          content: content,
+          author: author,
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: Colors.lightGreen,
+          onPressed: () {
+            _capturePng();
+          },
+          label: const Text('Take screenshot'),
+          icon: const Icon(Icons.share_rounded),
+        ),
       ),
     );
   }
 }
-// child: Column(
-// crossAxisAlignment: CrossAxisAlignment.start,
-// children: [
-// Container(
-// height: 50,
-// child: ListView.builder(
-// scrollDirection: Axis.horizontal,
-// itemCount: tags.length,
-// itemBuilder: (context, index) {
-// return Padding(
-// padding: const EdgeInsets.symmetric(horizontal: 8.0),
-// child: Chip(
-// label: Text(tags[index]),
-// backgroundColor: Colors.white,
-// labelStyle: const TextStyle(color: Colors.black),
-// ),
-// );
-// },
-// ),
-// ),
-// Expanded(
-// child: Padding(
-// padding: const EdgeInsets.all(16.0),
-// child: Center(
-// child: Text(
-// content,
-// style: const TextStyle(fontSize: 20),
-// ),
-// ),
-// ),
-// ),
-// Center(
-// child: imageUrl.isNotEmpty
-// ? Image.network(imageUrl)
-//     : const Text('Image loading or not available'),
-// ),
-// ],
-// ),

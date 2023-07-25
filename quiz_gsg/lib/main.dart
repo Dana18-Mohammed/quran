@@ -1,13 +1,13 @@
-// main.dart
-
 import 'package:flutter/material.dart';
 import 'package:quiz_gsg/screens/home.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomeScreen(), // Set the HomeScreen as the initial route
+      home: const HomeScreen(), // Set the HomeScreen as the initial route
     );
   }
 }
